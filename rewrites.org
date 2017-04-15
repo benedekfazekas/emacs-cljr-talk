@@ -1,0 +1,117 @@
+* Rewrites
+
+** introduction
+- name
+- projects (clojure-mode, clj-refactor, cider, cljr/cider nrepl middlewares)
+- accent
+- uswitch (stickers)??
+- cljr -- clj-refactor
+- in this talk i want to focus on the less discussed difficulties with contributing to free/open source projects and the reasons it is still rewarding and specially want to explore why/how we do rewrites in this context
+** clojure-emacs/clj-refactor.el#364 on github
+[[https://github.com/clojure-emacs/clj-refactor.el/issues/364][cljr issue 364]]
+so what is going on here?
+- issue reporter asks if we can be a bit more prudent with dependencies. they don't like paredit
+- i answer. tell them he does not need to use paredit but yes it is still installed. invite them to do a PR to get rid of paredit if he wants to.
+- magnars objects about getting rid of paredit. no point and risky
+- expez closes the issue
+- i add that i am doing this kind of change anyway when migrating to clojure mode
+- magnars is surprised/shocked that i waste my time with such things
+- bbatsov adds that people/users don't want to deal with several packages etc
+- magnars is even more surprised/bewildered
+- i get a bit defensive, and share my anedoctally evidenced insight that people don't even necessarily understand, aware of the fact that cider/cljr are different packages
+- bbatsov supports my insight and adds that `inf-clojure` users could benefit from the migrated functions
+- conversation ends here
+
+*** the people and a bit of the history of cljr
+
+i am privileged to work with these people.
+**** Pitometsu
+     poor thing, they trigger a conversation and perhaps utterly bewildered what happened to his simple question/request/concern
+**** magnars
+he started cljr as open source usually starts eg. fixing his own problems and publishing the results, also other emacs packages are awesome, also [[http://www.parens-of-the-dead.com/][parens of the dead]] is super awesome. magnars is still active on the project (commits, issues, comments etc) but he is not the benevolent dictator
+**** expez
+we started contributing to cljr around the same time and we are comaintaining cljr nowadays. we joined when cljr was an elisp only project. we went down the road (in agreement with magnars) to adopt the same architecture as cider (eg. nrepl middleware written in clojure doing the heavy lifting; elisp is the client). expez did a loads of important work.
+**** bbatsov
+ around the same time we got invited by bbatsov to join `clojure-emacs` organisation with cljr. he is a high profile open source contributor. ruby and clojure style guides, ruby linter, benevolent dictator (aka maintainer) of clojure-mode/cider, most projects in clojure-emacs organisation
+
+*** the project architecture and the different type of features
+
+editor agnostic middleware (integrations for spacemacs, vim, lighttable). written in clojure. means you need a running repl for the more advanced features just like with cider.
+
+[[file:cider_architecture.png]]
+
+- we have some elisp only features (let related stuff, cycle privacy, cycle collection/convert collection)
+- some middleware related stuff see architecture above (clean ns)
+- middleware related stuff where we need an AST (find symbol, rename symbol)
+
+*** all the things for cloure in emacs
+
+loads of packages -- bit of a mess. ppl perhaps not really aware what is out there or sometimes even what they are really using.
+just works (tm) vs. make your own tools
+cursive (intelliJ clojure plugin, pay-for licence) is one extreme (just works) hacking together something in elisp using some cljr feature to clean the ns declarations in your big legacy project is the other extreme
+all this together more likely has more features than cursive. more difficult to set up and work with it
+
+**** clojure mode
+major mode for clojure, syntax highlighting etc
+**** inf-clojure
+for purists, for ppl who work in emacs but don't want the bells and whistles, just a simple REPL
+**** cider
+all the bells and whistles, from jump to source through the debugger to the support for running your clojure tests
+**** clj-refactor
+for refactoring, more structural editing, clean-ns, find usages
+**** flycheck clojure
+for linting your code on the fly
+
+** why is contributing hard but still so rewarding that it worths it?
+*** working with really bright people whom you hardly know
+
+meeting only on conferences if even
+using very limited channels (github, irc, slack)
+you can always fall back to hack alone and publishing it but working in a team on a project people actually use is much more enjoyable
+
+*** how do you know your users?
+
+really difficult. perhaps a bit tooling specific. no real data on how they use the features. only anecdotal evidence, depends on those poeple who at least active enough to contribute in the form of issues, comments etc. autoinjecting is an other example.
+
+*** why worths it?
+you get to work with bright people. working in free software/open source gives you *perspective* similarly how being polyglot gives you perspective for programming in general. skills, problems, situations you usually don't face in your day job.
+
+**** examples
+git flows and foo,
+
+** compare cycle collection type with convert collection
+
+#+INCLUDE: "cycle-collection.el"
+
+#+INCLUDE: "convert-collection.el"
+
+new implementation is more concise still more readable, does not use dependencies, enables converting instead of cycling (cycling still possible in theory).
+
+not taking full credits for the code myself. loads of comments on the PR (Malabarba!). actually the converting idea came during the discussion on the PR.
+
+really nice example of small rewrite. what about regressions? does it worth it? so many new things could be written...
+
+** clojure-mode/cider/cljr state of the project and roadmap
+
+cljr is matured and also maintainers have very little time nowadays. we get a fair amount of PRs which is nice. also as stated in the issue 364 i want to migrate stuff into clojure mode cider to eventually merge cljr into them. elisp only into clojure mode is mainly done. but
+
+- clean ns is a bit bloated. does too much i think, i want have unused requires separately again
+- analyzer (tools.analyzer) is too heavyweight, can't we have a similar experience than cursive, eg the same feature set as in cider/cljr but without REPL being necessary? also for clojurescript (clojure's own reader, planck, joker, run our own minimal reader/analyzer?)
+- without solving the above i don't want to start on migrating find usages etc into cider.
+
+huge rewrite. does it worth it? why are we doing rewrites?
+task and scope is predefined in rewrites (boundaries) we still have our freedoms to be creative, to change/improve things. as you scale up a rewrite your freedom scales up with it
+
+** wrapping up, rewrites all around
+
+#+begin_quote
+
+Yes, I'm very fond of boats myself. I like the way they're-contained. You don't have to worry about which way to go, or whether to go at all-the question doesn't arise [...] One is free on a boat. For a time. Relatively.
+
+[...]
+
+we may seize the moment, toss it around while the moment pass, a short dash here, an exploration there, but we are brought round full circle to face again the single immutable fact [- that we, Rosencrantz and Guildenstern, are taking Hamlet to England.]
+
+#+end_quote
+
+[[https://en.wikipedia.org/wiki/Rosencrantz_and_Guildenstern_Are_Dead][rosencrantz and guildernstern are dead]] play: they have a few scenes and lines in Shakespeare's Hamlet. in this play their fate is defined by the original Shakespeare play (boundaries) but between these scenes which are also part of the this play Tom Stoppard writes a new play. eg he/them has freedom within the defined boundaries to be creative and do new play.
